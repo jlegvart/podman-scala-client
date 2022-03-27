@@ -23,6 +23,7 @@ import org.http4s.implicits._
 import org.typelevel.jawn.fs2._
 import io.podmanclient.api.uri.PodmanUri._
 import io.podmanclient.client.PodmanClient._
+import io.podmanclient._
 
 import scala.concurrent.ExecutionContext.global
 
@@ -30,24 +31,25 @@ object System {
 
   implicit val f = new io.circe.jawn.CirceSupportParser(None, false).facade
 
-  def info[F[_]: Concurrent](client: Client[F]): F[PodmanResponse[Json]] =
-    client.get(infoUri)(mapJsonResponse)
+  def info[F[_]: Concurrent](prefix: String, client: Client[F]): F[PodmanResponse[Json]] =
+    client.get(asUri(prefix, infoUri))(mapJsonResponse)
 
-  def ping[F[_]: Concurrent](client: Client[F]): F[PodmanResponse[Json]] =
-    client.get(pingUri)(mapJsonResponse)
+  def ping[F[_]: Concurrent](prefix: String, client: Client[F]): F[PodmanResponse[Json]] =
+    client.get(asUri(prefix, pingUri))(mapJsonResponse)
 
-  def df[F[_]: Concurrent](client: Client[F]): F[PodmanResponse[Json]] =
-    client.get(diskUri)(mapJsonResponse)
+  def df[F[_]: Concurrent](prefix: String, client: Client[F]): F[PodmanResponse[Json]] =
+    client.get(asUri(prefix, dfUri))(mapJsonResponse)
 
-  def events[F[_]: Concurrent](client: Client[F]): F[PodmanResponse[List[Json]]] = client
-    .stream(Request[F](Method.GET, eventsUri.withQueryParam("stream", false)))
-    .flatMap(_.body.chunks.parseJsonStream)
-    .compile
-    .toList
-    .map(jsonList => ResponseSuccess(Some(jsonList)))
+  def events[F[_]: Concurrent](prefix: String, client: Client[F]): F[PodmanResponse[List[Json]]] =
+    client
+      .stream(Request[F](Method.GET, asUri(prefix, eventsUri).withQueryParam("stream", false)))
+      .flatMap(_.body.chunks.parseJsonStream)
+      .compile
+      .toList
+      .map(jsonList => ResponseSuccess(Some(jsonList)))
 
-  def eventsStream[F[_]: Concurrent](client: Client[F]) = client
-    .stream(Request[F](Method.GET, eventsUri.withQueryParam("stream", true)))
+  def eventsStream[F[_]: Concurrent](prefix: String, client: Client[F]) = client
+    .stream(Request[F](Method.GET, asUri(prefix, eventsUri).withQueryParam("stream", true)))
     .flatMap(_.body.chunks.parseJsonStream)
 
 }

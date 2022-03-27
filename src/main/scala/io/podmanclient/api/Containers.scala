@@ -11,10 +11,12 @@ import org.http4s.client._
 import org.http4s.implicits._
 import io.circe.syntax._
 import io.circe.Json
+import io.podmanclient._
 
 object Containers {
 
   def list[F[_]: Concurrent](
+    prefix: String,
     all: Boolean = false,
     filters: Map[String, List[String]] = Map.empty,
     limit: Int = 10,
@@ -24,7 +26,7 @@ object Containers {
   )(
     client: Client[F]
   ): F[PodmanResponse[Json]] = {
-    val r = listContainers
+    val r = asUri(prefix, listContainersUri)
       .withQueryParam("all", all)
       .withQueryParam("filters", filters.asJson.noSpaces)
       .withQueryParam("limit", limit)
