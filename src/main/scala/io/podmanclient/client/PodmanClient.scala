@@ -52,6 +52,13 @@ object PodmanClient {
     .build
     .map(client => UnixSocket(socketAddress)(client))
 
-  private def defaultTCPClient[F[_]: Async](uri: Uri): Resource[F, Client[F]] = ???
+  private def defaultTCPClient[F[_]: Async](uri: Uri): Resource[F, Client[F]] = EmberClientBuilder
+    .default[F]
+    .build
+    .map { c =>
+      Client { req =>
+        c.run(req.withUri(uri.resolve(req.uri)))
+      }
+    }
 
 }
