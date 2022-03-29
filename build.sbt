@@ -33,6 +33,6 @@ lazy val root = project
       "org.typelevel" %% "log4cats-slf4j"                % log4catsVersion,
       "ch.qos.logback" % "logback-classic"               % logbackVersion,
       "org.scalatest" %% "scalatest"                     % scalaTestVersion    % Test,
-      "org.typelevel" %% "cats-effect-testing-scalatest" % catsEffectScalaTest % Test,
+      "org.typelevel" %% "cats-effect-testing-scalatest" % catsEffectScalaTest % Test
     ),
   )
