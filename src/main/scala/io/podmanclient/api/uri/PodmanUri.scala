@@ -9,6 +9,7 @@ object PodmanUri {
   val dfUri     = "system/df"
   val eventsUri = "events"
 
-  val listContainersUri = "containers/json"
+  val listContainersUri  = "containers/json"
+  val createContainerUri = "containers/create"
 
 }
