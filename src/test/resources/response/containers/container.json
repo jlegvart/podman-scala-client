@@ -1,0 +1,30 @@
+{
+    "AutoRemove": false,
+    "Command": [
+        "$name"
+    ],
+    "Created": "2022-01-16T17:47:05.420645642+01:00",
+    "CreatedAt": "",
+    "Exited": true,
+    "ExitedAt": 0,
+    "ExitCode": 0,
+    "Id": "656e55e26ab63bde",
+    "Image": "docker.io/library/$name:latest",
+    "ImageID": "2494248e13da2805a95ad840f61dd6c",
+    "IsInfra": false,
+    "Labels": null,
+    "Mounts": [],
+    "Names": [
+        "$name"
+    ],
+    "Namespaces": {},
+    "Networks": null,
+    "Pid": 0,
+    "Pod": "",
+    "PodName": "",
+    "Ports": [],
+    "Size": null,
+    "StartedAt": 0,
+    "State": "$status",
+    "Status": ""
+}
