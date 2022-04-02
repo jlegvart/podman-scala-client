@@ -27,15 +27,14 @@ import io.podmanclient.server.service.ContainersService
 
 trait PodmanClientTest extends AsyncFlatSpec with AsyncIOSpec with Matchers {
 
-  val clientPrefix = "/v3.0.0/libpod/"
-  val serverPrefix = Root / "v3.0.0" / "libpod"
+  val baseUri      = Root / "v3.0.0" / "libpod"
+  val clientPrefix = Uri(path = baseUri)
 
   val mockServer =
-    SystemService.endpoints(serverPrefix) <+>
-      ContainersService.endpoints(serverPrefix)
+    SystemService.endpoints(baseUri) <+>
+      ContainersService.endpoints(baseUri)
 
-  val client =
-    Logger(logHeaders = true, logBody = false)(Client.fromHttpApp(mockServer.orNotFound))
+  val client = Logger(logHeaders = true, logBody = false)(Client.fromHttpApp(mockServer.orNotFound))
 
   def assert[A](
     request: => IO[PodmanResponse[A]],

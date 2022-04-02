@@ -24,14 +24,14 @@ import org.http4s.implicits._
 object Containers {
 
   def list[F[_]: Concurrent](
-    prefix: String,
+    base: Uri,
     all: Boolean = false,
     filters: Map[String, List[String]] = Map.empty,
     limit: Int = 10,
   )(
     client: Client[F]
   ): F[PodmanResponse[Json]] = {
-    val r = asUri(prefix, listContainersUri)
+    val r = listContainersUri(base)
       .withQueryParam("all", all)
       .withQueryParam("filters", filters.asJson.noSpaces)
       .withQueryParam("limit", limit)
@@ -39,7 +39,7 @@ object Containers {
   }
 
   def create[F[_]: Concurrent](
-    prefix: String,
+    base: Uri,
     image: String,
     name: Option[String] = None,
     env: Map[String, String] = Map.empty,
@@ -55,20 +55,18 @@ object Containers {
       "labels"       -> labels.asJson,
       "portMappings" -> portMappings.asJson,
     )
-    val request: Request[F] = Request[F](Method.POST, asUri(prefix, createContainerUri))
+    val request: Request[F] = Request[F](Method.POST, createContainerUri(base))
       .withEntity[Json](body)
     client.expect[Json](request).map(json => ResponseSuccess(Some(json)))
   }
 
   def start[F[_]: Concurrent](
-    prefix: String,
+    base: Uri,
     name: String,
   )(
     client: Client[F]
   ): F[PodmanResponse[Json]] = {
-    val u                   = Uri.unsafeFromString(prefix) / "containers" / name / "start"
-    val request: Request[F] = Request[F](Method.POST, u)
-
+    val request: Request[F] = Request[F](Method.POST, createContainerUri(base, name))
     client.expect[Json](request).map(json => ResponseSuccess(Some(json)))
   }
 

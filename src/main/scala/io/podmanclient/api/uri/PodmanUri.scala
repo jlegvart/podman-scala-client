@@ -4,12 +4,16 @@ import org.http4s.Uri
 
 object PodmanUri {
 
-  val infoUri   = "info"
-  val pingUri   = "_ping"
-  val dfUri     = "system/df"
-  val eventsUri = "events"
-
-  val listContainersUri  = "containers/json"
   val createContainerUri = "containers/create"
 
+  def infoUri(base: Uri)   = base / "info"
+  def pingUri(base: Uri)   = base / "_ping"
+  def dfUri(base: Uri)     = systemUri(base) / "df"
+  def eventsUri(base: Uri) = base / "events"
+  def systemUri(base: Uri) = base / "system"
+
+  def listContainersUri(base: Uri)                = containersUri(base) / "json"
+  def createContainerUri(base: Uri)               = containersUri(base) / "create"
+  def createContainerUri(base: Uri, name: String) = containersUri(base) / name / "start"
+  def containersUri(base: Uri)                    = base / "containers"
 }

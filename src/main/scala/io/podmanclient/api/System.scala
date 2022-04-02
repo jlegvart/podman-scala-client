@@ -31,25 +31,24 @@ object System {
 
   implicit val f = new io.circe.jawn.CirceSupportParser(None, false).facade
 
-  def info[F[_]: Concurrent](prefix: String, client: Client[F]): F[PodmanResponse[Json]] =
-    client.get(asUri(prefix, infoUri))(mapJsonResponse)
+  def info[F[_]: Concurrent](base: Uri, client: Client[F]): F[PodmanResponse[Json]] =
+    client.get(infoUri(base))(mapJsonResponse)
 
-  def ping[F[_]: Concurrent](prefix: String, client: Client[F]): F[PodmanResponse[Json]] =
-    client.get(asUri(prefix, pingUri))(mapJsonResponse)
+  def ping[F[_]: Concurrent](base: Uri, client: Client[F]): F[PodmanResponse[Json]] =
+    client.get(pingUri(base))(mapJsonResponse)
 
-  def df[F[_]: Concurrent](prefix: String, client: Client[F]): F[PodmanResponse[Json]] =
-    client.get(asUri(prefix, dfUri))(mapJsonResponse)
+  def df[F[_]: Concurrent](base: Uri, client: Client[F]): F[PodmanResponse[Json]] =
+    client.get(dfUri(base))(mapJsonResponse)
 
-  def events[F[_]: Concurrent](prefix: String, client: Client[F]): F[PodmanResponse[List[Json]]] =
-    client
-      .stream(Request[F](Method.GET, asUri(prefix, eventsUri).withQueryParam("stream", false)))
-      .flatMap(_.body.chunks.parseJsonStream)
-      .compile
-      .toList
-      .map(jsonList => ResponseSuccess(Some(jsonList)))
+  def events[F[_]: Concurrent](base: Uri, client: Client[F]): F[PodmanResponse[List[Json]]] = client
+    .stream(Request[F](Method.GET, eventsUri(base).withQueryParam("stream", false)))
+    .flatMap(_.body.chunks.parseJsonStream)
+    .compile
+    .toList
+    .map(jsonList => ResponseSuccess(Some(jsonList)))
 
-  def eventsStream[F[_]: Concurrent](prefix: String, client: Client[F]) = client
-    .stream(Request[F](Method.GET, asUri(prefix, eventsUri).withQueryParam("stream", true)))
+  def eventsStream[F[_]: Concurrent](base: Uri, client: Client[F]) = client
+    .stream(Request[F](Method.GET, eventsUri(base).withQueryParam("stream", true)))
     .flatMap(_.body.chunks.parseJsonStream)
 
 }
