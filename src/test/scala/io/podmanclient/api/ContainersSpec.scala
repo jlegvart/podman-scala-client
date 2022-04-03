@@ -5,7 +5,6 @@ import cats.effect.IO
 import cats.effect.testing.scalatest.AsyncIOSpec
 import cats.syntax.all._
 import io.circe.syntax._
-import io.podmanclient.api.response.ResponseSuccess
 import io.podmanclient.client.PodmanClient
 import io.podmanclient.config.PodmanConfig
 import io.podmanclient.config.TcpPodmanUri
@@ -16,34 +15,45 @@ import org.http4s.dsl.io._
 import org.http4s.implicits._
 
 import scala.concurrent.duration._
+import io.podmanclient.api.response.ResultSuccess
+import io.podmanclient.api.response.ResponseBody
+import io.podmanclient.api.response.ResponseEmpty
 
 class ContainersSpec extends PodmanClientTest {
 
   "List endpoint" should "return JSON of running containers" in {
     assert(
       Containers.list(clientPrefix)(client),
-      ContainersServiceResponse.runningContainers.map(resp => ResponseSuccess(Some(resp.asJson))),
+      ContainersServiceResponse
+        .runningContainers
+        .map(json => ResultSuccess(200, ResponseBody(Some(json.asJson)))),
     )
   }
 
   it should "return JSON of all containers when parameter 'all=true'" in {
     assert(
       Containers.list(clientPrefix, all = true)(client),
-      ContainersServiceResponse.allContainers.map(resp => ResponseSuccess(Some(resp.asJson))),
+      ContainersServiceResponse
+        .allContainers
+        .map(json => ResultSuccess(200, ResponseBody(Some(json.asJson)))),
     )
   }
 
   it should "return JSON of running containers when filter by 'status=running'" in {
     assert(
       Containers.list(clientPrefix, filters = Map("status" -> List("running")))(client),
-      ContainersServiceResponse.runningContainers.map(resp => ResponseSuccess(Some(resp.asJson))),
+      ContainersServiceResponse
+        .runningContainers
+        .map(json => ResultSuccess(200, ResponseBody(Some(json.asJson)))),
     )
   }
 
   it should "return JSON of exited containers when filter by 'status=exited'" in {
     assert(
       Containers.list(clientPrefix, filters = Map("status" -> List("exited")))(client),
-      ContainersServiceResponse.exitedContainers.map(resp => ResponseSuccess(Some(resp.asJson))),
+      ContainersServiceResponse
+        .exitedContainers
+        .map(json => ResultSuccess(200, ResponseBody(Some(json.asJson)))),
     )
   }
 
@@ -52,16 +62,14 @@ class ContainersSpec extends PodmanClientTest {
       Containers.create(clientPrefix, "docker.io/postgres:latest")(client),
       ContainersServiceResponse
         .createdContainerSuccess
-        .map((resp => ResponseSuccess(Some(resp)))),
+        .map((json => ResultSuccess(201, ResponseBody(Some(json))))),
     )
   }
 
-  ignore should "return no content" in {
+  "Start endpoint" should "return no content" in {
     assert(
       Containers.start(clientPrefix, "postgres")(client),
-      ContainersServiceResponse
-        .createdContainerSuccess
-        .map((resp => ResponseSuccess(Some(resp)))),
+      ResultSuccess(204, ResponseEmpty).pure[IO],
     )
   }
 

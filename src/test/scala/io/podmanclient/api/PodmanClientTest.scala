@@ -7,8 +7,6 @@ import cats.syntax.all._
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
-import io.podmanclient.api.response.PodmanResponse
-import io.podmanclient.api.response.ResponseSuccess
 import io.podmanclient.client.PodmanClient
 import io.podmanclient.config.PodmanConfig
 import io.podmanclient.config.TcpPodmanUri
@@ -24,6 +22,7 @@ import org.scalatest.compatible.Assertion
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
 import io.podmanclient.server.service.ContainersService
+import io.podmanclient.api.response.PodmanResult
 
 trait PodmanClientTest extends AsyncFlatSpec with AsyncIOSpec with Matchers {
 
@@ -37,8 +36,8 @@ trait PodmanClientTest extends AsyncFlatSpec with AsyncIOSpec with Matchers {
   val client = Logger(logHeaders = true, logBody = false)(Client.fromHttpApp(mockServer.orNotFound))
 
   def assert[A](
-    request: => IO[PodmanResponse[A]],
-    expectedResponse: IO[PodmanResponse[A]],
+    request: => IO[PodmanResult],
+    expectedResponse: IO[PodmanResult],
   ): IO[Assertion] = request.flatMap { response =>
     expectedResponse.map { expected =>
       response should equal(expected)

@@ -31,20 +31,6 @@ object PodmanClient {
           .flatMap(defaultTCPClient(_))
     }
 
-  def mapJsonResponse[F[_]: Concurrent]: Response[F] => F[PodmanResponse[Json]] =
-    response =>
-      response.status match {
-        case Status.Ok => bodyAsJson(response).flatMap(body => ResponseSuccess(body).pure[F]).widen
-        case _         => bodyAsJson(response).flatMap(body => ResponseError(body).pure[F]).widen
-      }
-
-  private def bodyAsJson[F[_]: Concurrent](
-    response: Response[F]
-  ): F[Option[Json]] = response.as[Json].attempt.map {
-    case Left(value)  => None
-    case Right(value) => Some(value)
-  }
-
   private def defaultSocketClient[F[_]: Async](
     socketAddress: UnixSocketAddress
   ): Resource[F, Client[F]] = EmberClientBuilder

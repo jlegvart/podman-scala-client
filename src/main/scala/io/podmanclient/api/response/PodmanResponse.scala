@@ -2,9 +2,18 @@ package io.podmanclient.api.response
 
 import io.circe.Json
 
-trait PodmanResponse[A] extends Product with Serializable {
-  def response: Option[A]
+sealed trait PodmanResult extends Product with Serializable {
+
+  def status: Int
+  def response: PodmanResponse
+
 }
 
-sealed case class ResponseSuccess[A](response: Option[A])     extends PodmanResponse[A]
-sealed case class ResponseError[Json](response: Option[Json]) extends PodmanResponse[Json]
+final case class ResultSuccess(status: Int, response: PodmanResponse) extends PodmanResult
+final case class ResultFailure(status: Int, response: PodmanResponse) extends PodmanResult
+final case class ResultInfo(status: Int, response: PodmanResponse)    extends PodmanResult
+
+sealed trait PodmanResponse extends Product with Serializable
+
+final case class ResponseBody[A](body: Option[A]) extends PodmanResponse
+final case object ResponseEmpty                   extends PodmanResponse
