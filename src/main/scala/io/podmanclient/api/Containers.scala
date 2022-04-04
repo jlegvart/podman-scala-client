@@ -86,12 +86,44 @@ object Containers {
   )(
     client: Client[F]
   ): F[PodmanResult] = {
-    val request: Request[F] = Request[F](Method.POST, createContainerUri(base, name))
+    val request: Request[F] = Request[F](Method.POST, startContainerUri(base, name))
     client.run(request).use { response =>
       response.status match {
         case status @ Status.NoContent   => ResultSuccess(status.code, ResponseEmpty).pure[F].widen
         case status @ Status.NotModified => ResultInfo(status.code, ResponseEmpty).pure[F].widen
         case _                           => orError(response)
+      }
+    }
+  }
+
+  def stop[F[_]: Concurrent](
+    base: Uri,
+    name: String,
+  )(
+    client: Client[F]
+  ): F[PodmanResult] = {
+    val request: Request[F] = Request[F](Method.POST, stopContainerUri(base, name))
+    client.run(request).use { response =>
+      response.status match {
+        case status @ Status.NoContent   => ResultSuccess(status.code, ResponseEmpty).pure[F].widen
+        case status @ Status.NotModified => ResultInfo(status.code, ResponseEmpty).pure[F].widen
+        case _                           => orError(response)
+      }
+    }
+  }
+
+  def inspect[F[_]: Concurrent](
+    base: Uri,
+    name: String,
+  )(
+    client: Client[F]
+  ): F[PodmanResult] = {
+    val request: Request[F] = Request[F](Method.POST, inspectContainerUri(base, name))
+    client.run(request).use { response =>
+      response.status match {
+        case status @ Status.Ok =>
+          response.as[Json].map(json => ResultSuccess(status.code, ResponseBody(Some(json))))
+        case _ => orError(response)
       }
     }
   }

@@ -21,7 +21,7 @@ import io.podmanclient.api.response.ResponseEmpty
 
 class ContainersSpec extends PodmanClientTest {
 
-  "List endpoint" should "return JSON of running containers" in {
+  "List" should "return JSON of running containers" in {
     assert(
       Containers.list(clientPrefix)(client),
       ContainersServiceResponse
@@ -57,19 +57,35 @@ class ContainersSpec extends PodmanClientTest {
     )
   }
 
-  "Create endpoint" should "return JSON with id of created container" in {
+  "Create" should "return JSON with id of created container" in {
     assert(
       Containers.create(clientPrefix, "docker.io/postgres:latest")(client),
       ContainersServiceResponse
-        .createdContainerSuccess
+        .createdContainer
         .map((json => ResultSuccess(201, ResponseBody(Some(json))))),
     )
   }
 
-  "Start endpoint" should "return no content" in {
+  "Start" should "return no content" in {
     assert(
       Containers.start(clientPrefix, "postgres")(client),
       ResultSuccess(204, ResponseEmpty).pure[IO],
+    )
+  }
+
+  "Stop" should "return no content" in {
+    assert(
+      Containers.stop(clientPrefix, "postgres")(client),
+      ResultSuccess(204, ResponseEmpty).pure[IO],
+    )
+  }
+
+  "Inspect" should "return JSON of inspected container" in {
+    assert(
+      Containers.inspect(clientPrefix, "postgres")(client),
+      ContainersServiceResponse
+        .inspectedContainer
+        .map(json => ResultSuccess(200, ResponseBody(Some(json)))),
     )
   }
 

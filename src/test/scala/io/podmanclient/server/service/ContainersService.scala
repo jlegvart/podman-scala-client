@@ -31,15 +31,30 @@ class ContainersService(prefix: Uri.Path) {
 
   val create = HttpRoutes.of[IO] { case req @ POST -> prefix / "containers" / "create" =>
     log(req.toString()) >> {
-      Created(createdContainerSuccess)
+      Created(createdContainer)
     }
   }
 
-  val start = HttpRoutes.of[IO] { case req @ POST -> prefix / "containers" / name /  "start" =>
+  val start = HttpRoutes.of[IO] { case req @ POST -> prefix / "containers" / "postgres" / "start" =>
     log(req.toString()) >> {
       Response[IO](Status.NoContent).pure[IO]
     }
   }
+
+  val stop = HttpRoutes.of[IO] { case req @ POST -> prefix / "containers" / "postgres" / "stop" =>
+    log(req.toString()) >> {
+      Response[IO](Status.NoContent).pure[IO]
+    }
+  }
+
+  val inspect = HttpRoutes.of[IO] {
+    case req @ POST -> prefix / "containers" / "postgres" / "json" =>
+      log(req.toString()) >> {
+        inspectedContainer.flatMap(resp => Ok(resp))
+      }
+  }
+
+  def endpoints: HttpRoutes[IO] = list <+> create <+> start <+> stop <+> inspect
 
   private def processListParams(params: Map[String, String]): IO[List[Json]] = {
     val all = params.getOrElse("all", "false").toBoolean
@@ -73,7 +88,6 @@ class ContainersService(prefix: Uri.Path) {
         }
     }
 
-  def endpoints: HttpRoutes[IO] = list <+> create <+> start
 }
 
 object ContainersService {
@@ -84,9 +98,19 @@ object ContainersService {
 
 object ContainersServiceResponse {
 
-  def createdContainerSuccess: IO[Json] = Json
+  def inspectedContainer: IO[Json] = Json
     .obj(
-      "Id" -> "1044553a141fa92b8404047753ba11607d564dd8eda23301ab4ba6ec41de2fcf".asJson
+      "Id"      -> "4e4024a6363189e4cd3f10a273ff083f90fe371461dc8736a4a547010828dc7b".asJson,
+      "Created" -> "2022-01-01T10:51:45.338438961+02:00".asJson,
+      "Path"    -> "docker-entrypoint.sh".asJson,
+      "Args"    -> List("postgres").asJson,
+    )
+    .pure[IO]
+
+  def createdContainer: IO[Json] = Json
+    .obj(
+      "Id"       -> "1044553a141fa92b8404047753ba11607d564dd8eda23301ab4ba6ec41de2fcf".asJson,
+      "Warnings" -> List.empty.asJson,
     )
     .pure[IO]
 
