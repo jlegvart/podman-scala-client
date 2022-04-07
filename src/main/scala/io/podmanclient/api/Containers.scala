@@ -14,16 +14,11 @@ import org.http4s.Method
 import org.http4s.Request
 import org.http4s.Uri
 import org.http4s.circe._
-import org.http4s.client.Client
 import org.http4s.client._
 import org.http4s.client.dsl.io._
 import org.http4s.implicits._
-import io.podmanclient.api.response.PodmanResult
 import org.http4s.Status
-import io.podmanclient.api.response.ResultSuccess
-import io.podmanclient.api.response.ResponseBody
-import io.podmanclient.api.response.ResponseEmpty
-import io.podmanclient.api.response.ResultInfo
+import io.podmanclient.api.response.PodmanErrors._
 
 object Containers {
 
@@ -34,7 +29,7 @@ object Containers {
     limit: Int = 10,
   )(
     client: Client[F]
-  ): F[PodmanResult] = {
+  ): F[Either[PodmanError, Json]] = {
     val r = listContainersUri(base)
       .withQueryParam("all", all)
       .withQueryParam("filters", filters.asJson.noSpaces)
@@ -45,7 +40,7 @@ object Containers {
         case status @ Status.Ok =>
           response
             .as[Json]
-            .map(json => ResultSuccess(status.code, ResponseBody(Some(json))))
+            .map(_.asRight)
         case _ => orError(response)
       }
     }
@@ -60,7 +55,7 @@ object Containers {
     portMappings: List[PortMapping] = List.empty,
   )(
     client: Client[F]
-  ): F[PodmanResult] = {
+  ): F[Either[PodmanError, Json]] = {
     val body = Json.obj(
       "image"        -> image.asJson,
       "name"         -> name.asJson,
@@ -73,9 +68,8 @@ object Containers {
 
     client.run(request).use { response =>
       response.status match {
-        case status @ Status.Created =>
-          response.as[Json].map(json => ResultSuccess(status.code, ResponseBody(Some(json))))
-        case _ => orError(response)
+        case status @ Status.Created => response.as[Json].map(_.asRight)
+        case _                       => orError(response)
       }
     }
   }
@@ -85,13 +79,12 @@ object Containers {
     name: String,
   )(
     client: Client[F]
-  ): F[PodmanResult] = {
+  ): F[Either[PodmanError, Unit]] = {
     val request: Request[F] = Request[F](Method.POST, startContainerUri(base, name))
     client.run(request).use { response =>
       response.status match {
-        case status @ Status.NoContent   => ResultSuccess(status.code, ResponseEmpty).pure[F].widen
-        case status @ Status.NotModified => ResultInfo(status.code, ResponseEmpty).pure[F].widen
-        case _                           => orError(response)
+        case status @ (Status.NoContent | Status.NotModified) => ().asRight.pure[F]
+        case _                                                => orError(response)
       }
     }
   }
@@ -101,13 +94,12 @@ object Containers {
     name: String,
   )(
     client: Client[F]
-  ): F[PodmanResult] = {
+  ): F[Either[PodmanError, Unit]] = {
     val request: Request[F] = Request[F](Method.POST, stopContainerUri(base, name))
     client.run(request).use { response =>
       response.status match {
-        case status @ Status.NoContent   => ResultSuccess(status.code, ResponseEmpty).pure[F].widen
-        case status @ Status.NotModified => ResultInfo(status.code, ResponseEmpty).pure[F].widen
-        case _                           => orError(response)
+        case status @ (Status.NoContent | Status.NotModified) => ().asRight.pure[F]
+        case _                                                => orError(response)
       }
     }
   }
@@ -117,13 +109,12 @@ object Containers {
     name: String,
   )(
     client: Client[F]
-  ): F[PodmanResult] = {
+  ): F[Either[PodmanError, Json]] = {
     val request: Request[F] = Request[F](Method.POST, inspectContainerUri(base, name))
     client.run(request).use { response =>
       response.status match {
-        case status @ Status.Ok =>
-          response.as[Json].map(json => ResultSuccess(status.code, ResponseBody(Some(json))))
-        case _ => orError(response)
+        case status @ Status.Ok => response.as[Json].map(_.asRight)
+        case _                  => orError(response)
       }
     }
   }

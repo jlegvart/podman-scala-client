@@ -15,9 +15,7 @@ import org.http4s.dsl.io._
 import org.http4s.implicits._
 
 import scala.concurrent.duration._
-import io.podmanclient.api.response.ResultSuccess
-import io.podmanclient.api.response.ResponseBody
-import io.podmanclient.api.response.ResponseEmpty
+import io.podmanclient.api.response.PodmanErrors._
 
 class ContainersSpec extends PodmanClientTest {
 
@@ -26,7 +24,7 @@ class ContainersSpec extends PodmanClientTest {
       Containers.list(clientPrefix)(client),
       ContainersServiceResponse
         .runningContainers
-        .map(json => ResultSuccess(200, ResponseBody(Some(json.asJson)))),
+        .map(_.asJson.asRight),
     )
   }
 
@@ -35,7 +33,7 @@ class ContainersSpec extends PodmanClientTest {
       Containers.list(clientPrefix, all = true)(client),
       ContainersServiceResponse
         .allContainers
-        .map(json => ResultSuccess(200, ResponseBody(Some(json.asJson)))),
+        .map(_.asJson.asRight),
     )
   }
 
@@ -44,7 +42,7 @@ class ContainersSpec extends PodmanClientTest {
       Containers.list(clientPrefix, filters = Map("status" -> List("running")))(client),
       ContainersServiceResponse
         .runningContainers
-        .map(json => ResultSuccess(200, ResponseBody(Some(json.asJson)))),
+        .map(_.asJson.asRight),
     )
   }
 
@@ -53,7 +51,7 @@ class ContainersSpec extends PodmanClientTest {
       Containers.list(clientPrefix, filters = Map("status" -> List("exited")))(client),
       ContainersServiceResponse
         .exitedContainers
-        .map(json => ResultSuccess(200, ResponseBody(Some(json.asJson)))),
+        .map(_.asJson.asRight),
     )
   }
 
@@ -62,21 +60,18 @@ class ContainersSpec extends PodmanClientTest {
       Containers.create(clientPrefix, "docker.io/postgres:latest")(client),
       ContainersServiceResponse
         .createdContainer
-        .map((json => ResultSuccess(201, ResponseBody(Some(json))))),
+        .map(_.asRight),
     )
   }
 
   "Start" should "return no content" in {
-    assert(
-      Containers.start(clientPrefix, "postgres")(client),
-      ResultSuccess(204, ResponseEmpty).pure[IO],
-    )
+    assert(Containers.start(clientPrefix, "postgres")(client), ().asRight.pure[IO])
   }
 
   "Stop" should "return no content" in {
     assert(
       Containers.stop(clientPrefix, "postgres")(client),
-      ResultSuccess(204, ResponseEmpty).pure[IO],
+      ().asRight.pure[IO],
     )
   }
 
@@ -85,7 +80,7 @@ class ContainersSpec extends PodmanClientTest {
       Containers.inspect(clientPrefix, "postgres")(client),
       ContainersServiceResponse
         .inspectedContainer
-        .map(json => ResultSuccess(200, ResponseBody(Some(json)))),
+        .map(_.asRight),
     )
   }
 

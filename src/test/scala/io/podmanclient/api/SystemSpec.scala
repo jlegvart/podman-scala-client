@@ -17,10 +17,6 @@ import org.http4s.client.Client
 import org.http4s.client.middleware.Logger
 import org.http4s.dsl.io._
 import org.http4s.implicits._
-import io.podmanclient.api.response.PodmanResult
-import io.podmanclient.api.response.ResultSuccess
-import io.podmanclient.api.response.ResponseBody
-import io.podmanclient.api.response.ResponseEmpty
 
 class SystemTest extends PodmanClientTest {
 
@@ -29,12 +25,12 @@ class SystemTest extends PodmanClientTest {
       System.info(clientPrefix, client),
       SystemServiceResponse
         .infoResponseSuccess
-        .map(resp => ResultSuccess(200, ResponseBody(Some(resp)))),
+        .map(resp => resp.asRight),
     )
   }
 
   "Ping" should "return successful response without content" in {
-    assert(System.ping(clientPrefix, client), ResultSuccess(200, ResponseEmpty).pure[IO])
+    assert(System.ping(clientPrefix, client), true.asRight.pure[IO])
   }
 
   "df" should "return JSON with disk usage info" in {
@@ -42,7 +38,7 @@ class SystemTest extends PodmanClientTest {
       System.df(clientPrefix, client),
       SystemServiceResponse
         .dfResponseSuccess
-        .map(json => ResultSuccess(200, ResponseBody(Some(json)))),
+        .map(_.asRight),
     )
   }
 
@@ -55,7 +51,7 @@ class SystemTest extends PodmanClientTest {
 
     assert(
       System.events(clientPrefix, client),
-      jsonList.map(col => ResultSuccess(200, ResponseBody(Some(col)))),
+      jsonList.map(_.asRight),
     )
   }
 

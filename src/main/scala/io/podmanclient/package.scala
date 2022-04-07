@@ -4,14 +4,12 @@ import org.http4s.Uri
 import cats.effect.Concurrent
 import cats.syntax.all._
 import org.http4s.Response
-import io.podmanclient.api.response.PodmanResult
-import io.podmanclient.api.response.ResultFailure
-import io.podmanclient.api.response.ResponseBody
+import io.podmanclient.api.response.PodmanErrors._
 
 package object podmanclient {
 
-  def orError[F[_]: Concurrent](response: Response[F]): F[PodmanResult] = response
+  def orError[F[_]: Concurrent, A](response: Response[F]): F[Either[PodmanError, A]] = response
     .as[String]
-    .map(body => ResultFailure(response.status.code, ResponseBody(Some(body))))
+    .map(body => PodmanException(response.status.code, body).asLeft)
 
 }
