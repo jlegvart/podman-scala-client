@@ -21,7 +21,7 @@ class SystemService[F[_]: Concurrent] private (base: Uri, client: Client[F]) {
 
   implicit val f = new io.circe.jawn.CirceSupportParser(None, false).facade
 
-  def info(): F[Either[PodmanError, Json]] =
+  def info: F[Either[PodmanError, Json]] =
     client.get(infoUri(base)) { response =>
       response.status match {
         case status @ Status.Ok =>
@@ -33,7 +33,7 @@ class SystemService[F[_]: Concurrent] private (base: Uri, client: Client[F]) {
       }
     }
 
-  def ping(): F[Either[PodmanError, Boolean]] =
+  def ping: F[Either[PodmanError, Boolean]] =
     client.get(pingUri(base)) { response =>
       response.status match {
         case status @ Status.Ok => true.asRight.pure[F]
@@ -41,7 +41,7 @@ class SystemService[F[_]: Concurrent] private (base: Uri, client: Client[F]) {
       }
     }
 
-  def df(): F[Either[PodmanError, Json]] =
+  def df: F[Either[PodmanError, Json]] =
     client.get(dfUri(base)) { response =>
       response.status match {
         case status @ Status.Ok =>
@@ -52,7 +52,7 @@ class SystemService[F[_]: Concurrent] private (base: Uri, client: Client[F]) {
       }
     }
 
-  def events(): F[Either[PodmanError, List[Json]]] = {
+  def events: F[Either[PodmanError, List[Json]]] = {
     val stream = client
       .stream(Request[F](Method.GET, eventsUri(base).withQueryParam("stream", false)))
 
@@ -63,7 +63,7 @@ class SystemService[F[_]: Concurrent] private (base: Uri, client: Client[F]) {
       .map(_.asRight)
   }
 
-  def eventsStream(): Stream[F, Json] = client
+  def eventsStream: Stream[F, Json] = client
     .stream(Request[F](Method.GET, eventsUri(base).withQueryParam("stream", true)))
     .flatMap(_.body.chunks.parseJsonStream)
 

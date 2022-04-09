@@ -21,7 +21,7 @@ class SystemTest extends PodmanClientTest {
 
   "Info" should "return podman info JSON" in {
     assert(
-      systemService.info(),
+      systemService.info,
       SystemServiceResponse
         .infoResponseSuccess
         .map(resp => resp.asRight),
@@ -29,12 +29,12 @@ class SystemTest extends PodmanClientTest {
   }
 
   "Ping" should "return successful response without content" in {
-    assert(systemService.ping(), true.asRight.pure[IO])
+    assert(systemService.ping, true.asRight.pure[IO])
   }
 
   "df" should "return JSON with disk usage info" in {
     assert(
-      systemService.df(),
+      systemService.df,
       SystemServiceResponse
         .dfResponseSuccess
         .map(_.asRight),
@@ -49,7 +49,7 @@ class SystemTest extends PodmanClientTest {
       } yield a
 
     assert(
-      systemService.events(),
+      systemService.events,
       jsonList.map(_.asRight),
     )
   }
