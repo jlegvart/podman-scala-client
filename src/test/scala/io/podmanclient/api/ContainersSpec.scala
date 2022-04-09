@@ -16,6 +16,7 @@ import org.http4s.implicits._
 
 import scala.concurrent.duration._
 import io.podmanclient.api.response.PodmanErrors._
+import io.circe.Json
 
 class ContainersSpec extends PodmanClientTest {
 
@@ -57,21 +58,77 @@ class ContainersSpec extends PodmanClientTest {
 
   "Create" should "return JSON with id of created container" in {
     assert(
-      Containers.create(clientPrefix, "docker.io/postgres:latest")(client),
+      Containers.create(clientPrefix, "docker.io/postgres:latest", name = Some("postgres"))(client),
       ContainersServiceResponse
         .createdContainer
         .map(_.asRight),
     )
   }
 
-  "Start" should "return no content" in {
+  it should "return PodmanException with error message when container already exists" in {
+    assert(
+      Containers.create(clientPrefix, "docker.io/postgres:latest", name = Some("double"))(client),
+      PodmanException(
+        500,
+        Json
+          .obj(
+            "cause"    -> "that name is already in use".asJson,
+            "message"  -> "error creating container storage".asJson,
+            "response" -> 500.asJson,
+          )
+          .noSpaces
+          .toString(),
+      ).asLeft.pure[IO],
+    )
+  }
+
+  "Start" should "return unit when container is started" in {
     assert(Containers.start(clientPrefix, "postgres")(client), ().asRight.pure[IO])
   }
 
-  "Stop" should "return no content" in {
+  it should "return unit if container is already running" in {
+    assert(Containers.start(clientPrefix, "kibana")(client), ().asRight.pure[IO])
+  }
+
+  it should "return NoSuchContainer if container if container does not exist" in {
+    assert(
+      Containers.start(clientPrefix, "mysql")(client),
+      NoSuchContainer("mysql").asLeft.pure[IO],
+    )
+  }
+
+  "Stop" should "return unit when container is stopped" in {
     assert(
       Containers.stop(clientPrefix, "postgres")(client),
       ().asRight.pure[IO],
+    )
+  }
+
+  it should "return unit when container is already stopped" in {
+    assert(
+      Containers.stop(clientPrefix, "postgres")(client),
+      ().asRight.pure[IO],
+    )
+  }
+
+  it should "return NoSuchContainer if container does not exist" in {
+    assert(
+      Containers.stop(clientPrefix, "mysql")(client),
+      NoSuchContainer("mysql").asLeft.pure[IO],
+    )
+  }
+
+  "Delete" should "return unit when container is deleted" in {
+    assert(
+      Containers.delete(clientPrefix, "postgres")(client),
+      ().asRight.pure[IO],
+    )
+  }
+
+  it should "return NoSuchContainer if container does not exist" in {
+    assert(
+      Containers.delete(clientPrefix, "mysql")(client),
+      NoSuchContainer("mysql").asLeft.pure[IO],
     )
   }
 
@@ -81,6 +138,27 @@ class ContainersSpec extends PodmanClientTest {
       ContainersServiceResponse
         .inspectedContainer
         .map(_.asRight),
+    )
+  }
+
+  it should "return NoSuchContainer if container does not exist" in {
+    assert(
+      Containers.inspect(clientPrefix, "mysql")(client),
+      NoSuchContainer("mysql").asLeft.pure[IO],
+    )
+  }
+
+  "Logs" should "return container logs as string" in {
+    assert(
+      Containers.logs(clientPrefix, "postgres")(client),
+      ContainersServiceResponse.containerLogs.map(log => List.fill(2)(log).mkString.asRight),
+    )
+  }
+
+  it should "return NoSuchContainer if container does not exist" in {
+    assert(
+      Containers.logs(clientPrefix, "mysql")(client),
+      NoSuchContainer("mysql").asLeft.pure[IO],
     )
   }
 

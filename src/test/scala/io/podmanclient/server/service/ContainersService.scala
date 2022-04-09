@@ -16,6 +16,8 @@ import org.http4s.dsl.io._
 import org.http4s.implicits._
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
+import scala.concurrent.duration._
+import fs2.Stream
 
 class ContainersService(prefix: Uri.Path) {
 
@@ -31,30 +33,80 @@ class ContainersService(prefix: Uri.Path) {
 
   val create = HttpRoutes.of[IO] { case req @ POST -> prefix / "containers" / "create" =>
     log(req.toString()) >> {
-      Created(createdContainer)
-    }
-  }
+      val postBody = req.as[Json]
 
-  val start = HttpRoutes.of[IO] { case req @ POST -> prefix / "containers" / "postgres" / "start" =>
-    log(req.toString()) >> {
-      Response[IO](Status.NoContent).pure[IO]
-    }
-  }
+      postBody.flatMap { json =>
+        val cursor = json.hcursor
 
-  val stop = HttpRoutes.of[IO] { case req @ POST -> prefix / "containers" / "postgres" / "stop" =>
-    log(req.toString()) >> {
-      Response[IO](Status.NoContent).pure[IO]
-    }
-  }
-
-  val inspect = HttpRoutes.of[IO] {
-    case req @ POST -> prefix / "containers" / "postgres" / "json" =>
-      log(req.toString()) >> {
-        inspectedContainer.flatMap(resp => Ok(resp))
+        cursor.get[String]("name").liftTo[IO].flatMap {
+          case "double" =>
+            val errBody = Json.obj(
+              "cause"    -> "that name is already in use".asJson,
+              "message"  -> "error creating container storage".asJson,
+              "response" -> 500.asJson,
+            )
+            IO.pure(Response(status = Status.InternalServerError).withEntity[Json](errBody))
+          case _ => Created(createdContainer)
+        }
       }
+    }
   }
 
-  def endpoints: HttpRoutes[IO] = list <+> create <+> start <+> stop <+> inspect
+  val start = HttpRoutes.of[IO] { case req @ POST -> prefix / "containers" / name / "start" =>
+    log(req.toString()) >> {
+      name match {
+        case "postgres" => Response[IO](Status.NoContent).pure[IO]
+        case "kibana"   => Response[IO](Status.NotModified).pure[IO]
+        case _          => Response[IO](Status.NotFound).pure[IO]
+
+      }
+    }
+  }
+
+  val stop = HttpRoutes.of[IO] { case req @ POST -> prefix / "containers" / name / "stop" =>
+    log(req.toString()) >> {
+      name match {
+        case "postgres" => Response[IO](Status.NoContent).pure[IO]
+        case "kibana"   => Response[IO](Status.NotModified).pure[IO]
+        case _          => Response[IO](Status.NotFound).pure[IO]
+      }
+    }
+  }
+
+  val delete = HttpRoutes.of[IO] { case req @ DELETE -> prefix / "containers" / name =>
+    log(req.toString()) >> {
+      name match {
+        case "postgres" => Response[IO](Status.NoContent).pure[IO]
+        case _          => Response[IO](Status.NotFound).pure[IO]
+      }
+    }
+  }
+
+  val inspect = HttpRoutes.of[IO] { case req @ POST -> prefix / "containers" / name / "json" =>
+    log(req.toString()) >> {
+      name match {
+        case "postgres" => inspectedContainer.flatMap(resp => Ok(resp))
+        case _          => Response[IO](Status.NotFound).pure[IO]
+      }
+
+    }
+  }
+
+  val logR = HttpRoutes.of[IO] { case req @ GET -> prefix / "containers" / name / "logs" =>
+    log(req.toString()) >> {
+      val seconds = fs2.Stream.awakeEvery[IO](1.seconds).take(2)
+
+      name match {
+        case "postgres" => Ok(seconds.flatMap(_ => Stream.eval(containerLogs)))
+        case _          => Response[IO](Status.NotFound).pure[IO]
+      }
+
+    }
+  }
+
+  def endpoints: HttpRoutes[IO] =
+    list <+> create <+> start <+>
+      stop <+> delete <+> inspect <+> logR
 
   private def processListParams(params: Map[String, String]): IO[List[Json]] = {
     val all = params.getOrElse("all", "false").toBoolean
@@ -113,6 +165,10 @@ object ContainersServiceResponse {
       "Warnings" -> List.empty.asJson,
     )
     .pure[IO]
+
+  def containerLogs: IO[String] =
+    """LOG: starting PostgreSQL 14.1, 64-bit, listening on IPv4 address "0.0.0.0", port 5432"""
+      .pure[IO]
 
   def allContainers: IO[List[Json]]     = List(runningContainers, exitedContainers).flatSequence
   def runningContainers: IO[List[Json]] = List(redisContainer, postgresContainer).sequence

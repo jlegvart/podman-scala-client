@@ -84,7 +84,8 @@ object Containers {
     client.run(request).use { response =>
       response.status match {
         case status @ (Status.NoContent | Status.NotModified) => ().asRight.pure[F]
-        case _                                                => orError(response)
+        case status @ Status.NotFound => NoSuchContainer(name).asLeft[Unit].pure[F].widen
+        case _                        => orError(response)
       }
     }
   }
@@ -99,7 +100,24 @@ object Containers {
     client.run(request).use { response =>
       response.status match {
         case status @ (Status.NoContent | Status.NotModified) => ().asRight.pure[F]
-        case _                                                => orError(response)
+        case status @ Status.NotFound => NoSuchContainer(name).asLeft[Unit].pure[F].widen
+        case _                        => orError(response)
+      }
+    }
+  }
+
+  def delete[F[_]: Concurrent](
+    base: Uri,
+    name: String,
+  )(
+    client: Client[F]
+  ): F[Either[PodmanError, Unit]] = {
+    val request: Request[F] = Request[F](Method.DELETE, deleteContainerUri(base, name))
+    client.run(request).use { response =>
+      response.status match {
+        case status @ Status.NoContent => ().asRight.pure[F]
+        case status @ Status.NotFound  => NoSuchContainer(name).asLeft[Unit].pure[F].widen
+        case _                         => orError(response)
       }
     }
   }
@@ -113,8 +131,35 @@ object Containers {
     val request: Request[F] = Request[F](Method.POST, inspectContainerUri(base, name))
     client.run(request).use { response =>
       response.status match {
-        case status @ Status.Ok => response.as[Json].map(_.asRight)
-        case _                  => orError(response)
+        case status @ Status.Ok       => response.as[Json].map(_.asRight)
+        case status @ Status.NotFound => NoSuchContainer(name).asLeft[Json].pure[F].widen
+        case _                        => orError(response)
+      }
+    }
+  }
+
+  def logs[F[_]: Concurrent](
+    base: Uri,
+    name: String,
+    stderr: Boolean = true,
+    stdout: Boolean = true,
+    timestamps: Boolean = true,
+  )(
+    client: Client[F]
+  ): F[Either[PodmanError, String]] = {
+    val request: Request[F] = Request[F](
+      Method.GET,
+      logsContainerUri(base, name)
+        .withQueryParam("stderr", stderr)
+        .withQueryParam("stdout", stdout)
+        .withQueryParam("timestamps", timestamps),
+    )
+
+    client.run(request).use { response =>
+      response.status match {
+        case status @ Status.Ok       => response.as[String].map(_.asRight)
+        case status @ Status.NotFound => NoSuchContainer(name).asLeft[String].pure[F].widen
+        case _                        => orError(response)
       }
     }
   }

@@ -1,10 +1,10 @@
 package io.podmanclient.config
 
-trait PodmanUri {
+trait PodmanClientUri {
   def uri(): String
 }
 
-sealed case class UnixSocketPodmanUri(val uri: String) extends PodmanUri
-sealed case class TcpPodmanUri(val uri: String)        extends PodmanUri
+sealed case class UnixSocketPodmanUri(val uri: String) extends PodmanClientUri
+sealed case class TcpPodmanUri(val uri: String)        extends PodmanClientUri
 
-final case class PodmanConfig(uri: PodmanUri)
+final case class PodmanConfig(uri: PodmanClientUri)

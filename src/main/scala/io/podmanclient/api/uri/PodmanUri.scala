@@ -4,8 +4,6 @@ import org.http4s.Uri
 
 object PodmanUri {
 
-  val createContainerUri = "containers/create"
-
   def infoUri(base: Uri)   = base / "info"
   def pingUri(base: Uri)   = base / "_ping"
   def dfUri(base: Uri)     = systemUri(base) / "df"
@@ -16,6 +14,8 @@ object PodmanUri {
   def createContainerUri(base: Uri)                = containersUri(base) / "create"
   def startContainerUri(base: Uri, name: String)   = containersUri(base) / name / "start"
   def stopContainerUri(base: Uri, name: String)    = containersUri(base) / name / "stop"
+  def deleteContainerUri(base: Uri, name: String)  = containersUri(base) / name
   def inspectContainerUri(base: Uri, name: String) = containersUri(base) / name / "json"
+  def logsContainerUri(base: Uri, name: String)    = containersUri(base) / name / "logs"
   def containersUri(base: Uri)                     = base / "containers"
 }
