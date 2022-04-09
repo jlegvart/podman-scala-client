@@ -11,8 +11,7 @@ import io.podmanclient.client.PodmanClient
 import io.podmanclient.config.PodmanConfig
 import io.podmanclient.config.TcpPodmanUri
 import io.podmanclient.config.UnixSocketPodmanUri
-import io.podmanclient.server.service.SystemService
-import io.podmanclient.server.service.SystemServiceResponse
+import io.podmanclient.server.service._
 import org.http4s._
 import org.http4s.client.Client
 import org.http4s.client.middleware.Logger
@@ -21,8 +20,8 @@ import org.http4s.implicits._
 import org.scalatest.compatible.Assertion
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
-import io.podmanclient.server.service.ContainersService
-import io.podmanclient.api.response.PodmanErrors._
+import io.podmanclient.error.PodmanErrors._
+import io.podmanclient.service._
 
 trait PodmanClientTest extends AsyncFlatSpec with AsyncIOSpec with Matchers {
 
@@ -30,10 +29,13 @@ trait PodmanClientTest extends AsyncFlatSpec with AsyncIOSpec with Matchers {
   val clientPrefix = Uri(path = baseUri)
 
   val mockServer =
-    SystemService.endpoints(baseUri) <+>
-      ContainersService.endpoints(baseUri)
+    System.endpoints(baseUri) <+>
+      Containers.endpoints(baseUri)
 
   val client = Logger(logHeaders = true, logBody = false)(Client.fromHttpApp(mockServer.orNotFound))
+
+  val systemService     = SystemService(clientPrefix, client)
+  val containersService = ContainersService(clientPrefix, client)
 
   def assert[A](
     request: => IO[Either[PodmanError, A]],

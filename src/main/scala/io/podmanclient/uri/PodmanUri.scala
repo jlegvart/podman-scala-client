@@ -1,4 +1,4 @@
-package io.podmanclient.api.uri
+package io.podmanclient.uri
 
 import org.http4s.Uri
 

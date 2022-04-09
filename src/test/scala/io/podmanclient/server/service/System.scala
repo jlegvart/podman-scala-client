@@ -7,7 +7,7 @@ import com.comcast.ip4s._
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
-import io.podmanclient.api.uri.PodmanUri._
+import io.podmanclient.uri.PodmanUri._
 import org.http4s._
 import org.http4s.circe._
 import org.http4s.dsl.io._
@@ -15,7 +15,7 @@ import org.http4s.implicits._
 
 import scala.io.Source
 
-class SystemService(prefix: Uri.Path) {
+class System(prefix: Uri.Path) {
 
   import SystemServiceResponse._
 
@@ -49,9 +49,9 @@ class SystemService(prefix: Uri.Path) {
   def endpoints: HttpRoutes[IO] = info <+> ping <+> events <+> df
 }
 
-object SystemService {
+object System {
 
-  def endpoints(prefix: Uri.Path): HttpRoutes[IO] = new SystemService(prefix).endpoints
+  def endpoints(prefix: Uri.Path): HttpRoutes[IO] = new System(prefix).endpoints
 
 }
 

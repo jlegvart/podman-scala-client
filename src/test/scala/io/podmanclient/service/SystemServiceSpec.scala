@@ -10,7 +10,6 @@ import io.podmanclient.client.PodmanClient
 import io.podmanclient.config.PodmanConfig
 import io.podmanclient.config.TcpPodmanUri
 import io.podmanclient.config.UnixSocketPodmanUri
-import io.podmanclient.server.service.SystemService
 import io.podmanclient.server.service.SystemServiceResponse
 import org.http4s._
 import org.http4s.client.Client
@@ -22,7 +21,7 @@ class SystemTest extends PodmanClientTest {
 
   "Info" should "return podman info JSON" in {
     assert(
-      System.info(clientPrefix, client),
+      systemService.info(),
       SystemServiceResponse
         .infoResponseSuccess
         .map(resp => resp.asRight),
@@ -30,12 +29,12 @@ class SystemTest extends PodmanClientTest {
   }
 
   "Ping" should "return successful response without content" in {
-    assert(System.ping(clientPrefix, client), true.asRight.pure[IO])
+    assert(systemService.ping(), true.asRight.pure[IO])
   }
 
   "df" should "return JSON with disk usage info" in {
     assert(
-      System.df(clientPrefix, client),
+      systemService.df(),
       SystemServiceResponse
         .dfResponseSuccess
         .map(_.asRight),
@@ -50,7 +49,7 @@ class SystemTest extends PodmanClientTest {
       } yield a
 
     assert(
-      System.events(clientPrefix, client),
+      systemService.events(),
       jsonList.map(_.asRight),
     )
   }

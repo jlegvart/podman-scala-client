@@ -1,4 +1,4 @@
-package io.podmanclient.api
+package io.podmanclient.service
 
 import cats._
 import cats.effect.Concurrent
@@ -8,27 +8,25 @@ import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.syntax._
 import io.podmanclient._
-import io.podmanclient.api.uri.PodmanUri._
+import io.podmanclient.uri.PodmanUri._
 import io.podmanclient.client.PodmanClient._
-import org.http4s.Method
-import org.http4s.Request
-import org.http4s.Uri
+import org.http4s._
 import org.http4s.circe._
 import org.http4s.client._
 import org.http4s.client.dsl.io._
 import org.http4s.implicits._
 import org.http4s.Status
-import io.podmanclient.api.response.PodmanErrors._
+import io.podmanclient.error.PodmanErrors._
 
-object Containers {
+class ContainersService[F[_]: Concurrent] private (
+  base: Uri,
+  client: Client[F],
+) {
 
-  def list[F[_]: Concurrent](
-    base: Uri,
+  def list(
     all: Boolean = false,
     filters: Map[String, List[String]] = Map.empty,
     limit: Int = 10,
-  )(
-    client: Client[F]
   ): F[Either[PodmanError, Json]] = {
     val r = listContainersUri(base)
       .withQueryParam("all", all)
@@ -46,15 +44,12 @@ object Containers {
     }
   }
 
-  def create[F[_]: Concurrent](
-    base: Uri,
+  def create(
     image: String,
     name: Option[String] = None,
     env: Map[String, String] = Map.empty,
     labels: Map[Int, String] = Map.empty,
     portMappings: List[PortMapping] = List.empty,
-  )(
-    client: Client[F]
   ): F[Either[PodmanError, Json]] = {
     val body = Json.obj(
       "image"        -> image.asJson,
@@ -74,12 +69,7 @@ object Containers {
     }
   }
 
-  def start[F[_]: Concurrent](
-    base: Uri,
-    name: String,
-  )(
-    client: Client[F]
-  ): F[Either[PodmanError, Unit]] = {
+  def start(name: String): F[Either[PodmanError, Unit]] = {
     val request: Request[F] = Request[F](Method.POST, startContainerUri(base, name))
     client.run(request).use { response =>
       response.status match {
@@ -90,12 +80,7 @@ object Containers {
     }
   }
 
-  def stop[F[_]: Concurrent](
-    base: Uri,
-    name: String,
-  )(
-    client: Client[F]
-  ): F[Either[PodmanError, Unit]] = {
+  def stop(name: String): F[Either[PodmanError, Unit]] = {
     val request: Request[F] = Request[F](Method.POST, stopContainerUri(base, name))
     client.run(request).use { response =>
       response.status match {
@@ -106,12 +91,7 @@ object Containers {
     }
   }
 
-  def delete[F[_]: Concurrent](
-    base: Uri,
-    name: String,
-  )(
-    client: Client[F]
-  ): F[Either[PodmanError, Unit]] = {
+  def delete(name: String): F[Either[PodmanError, Unit]] = {
     val request: Request[F] = Request[F](Method.DELETE, deleteContainerUri(base, name))
     client.run(request).use { response =>
       response.status match {
@@ -122,12 +102,7 @@ object Containers {
     }
   }
 
-  def inspect[F[_]: Concurrent](
-    base: Uri,
-    name: String,
-  )(
-    client: Client[F]
-  ): F[Either[PodmanError, Json]] = {
+  def inspect(name: String): F[Either[PodmanError, Json]] = {
     val request: Request[F] = Request[F](Method.POST, inspectContainerUri(base, name))
     client.run(request).use { response =>
       response.status match {
@@ -138,14 +113,11 @@ object Containers {
     }
   }
 
-  def logs[F[_]: Concurrent](
-    base: Uri,
+  def logs(
     name: String,
     stderr: Boolean = true,
     stdout: Boolean = true,
     timestamps: Boolean = true,
-  )(
-    client: Client[F]
   ): F[Either[PodmanError, String]] = {
     val request: Request[F] = Request[F](
       Method.GET,
@@ -163,6 +135,15 @@ object Containers {
       }
     }
   }
+
+}
+
+object ContainersService {
+
+  def apply[F[_]: Concurrent](
+    base: Uri,
+    client: Client[F],
+  ) = new ContainersService(base, client)
 
 }
 

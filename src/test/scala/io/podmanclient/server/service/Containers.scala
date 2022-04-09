@@ -9,7 +9,7 @@ import com.comcast.ip4s._
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
-import io.podmanclient.api.uri.PodmanUri._
+import io.podmanclient.uri.PodmanUri._
 import org.http4s._
 import org.http4s.circe._
 import org.http4s.dsl.io._
@@ -19,7 +19,7 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import scala.concurrent.duration._
 import fs2.Stream
 
-class ContainersService(prefix: Uri.Path) {
+class Containers(prefix: Uri.Path) {
 
   implicit def logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
@@ -142,9 +142,9 @@ class ContainersService(prefix: Uri.Path) {
 
 }
 
-object ContainersService {
+object Containers {
 
-  def endpoints(prefix: Uri.Path): HttpRoutes[IO] = new ContainersService(prefix).endpoints
+  def endpoints(prefix: Uri.Path): HttpRoutes[IO] = new Containers(prefix).endpoints
 
 }
 

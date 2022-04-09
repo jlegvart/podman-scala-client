@@ -4,7 +4,7 @@ import org.http4s.Uri
 import cats.effect.Concurrent
 import cats.syntax.all._
 import org.http4s.Response
-import io.podmanclient.api.response.PodmanErrors._
+import io.podmanclient.error.PodmanErrors._
 
 package object podmanclient {
 

@@ -1,4 +1,4 @@
-package io.podmanclient.api.response
+package io.podmanclient.error
 
 import io.circe.Json
 

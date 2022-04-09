@@ -1,4 +1,4 @@
-package io.podmanclient.api
+package io.podmanclient.service
 
 import cats._
 import cats.effect._
@@ -6,29 +6,22 @@ import cats.effect.syntax.all._
 import cats.syntax.all._
 import fs2.Stream
 import io.circe.Json
-import org.http4s.MediaType
-import org.http4s.Method
-import org.http4s.Method._
-import org.http4s.Request
-import org.http4s.Response
-import org.http4s.Status
-import org.http4s.Status.Ok
-import org.http4s.Uri
+import org.http4s._
 import org.http4s.circe._
 import org.http4s.client.Client
 import org.http4s.implicits._
 import org.typelevel.jawn.fs2._
-import io.podmanclient.api.uri.PodmanUri._
+import io.podmanclient.uri.PodmanUri._
 import io.podmanclient._
 
 import scala.concurrent.ExecutionContext.global
-import io.podmanclient.api.response.PodmanErrors._
+import io.podmanclient.error.PodmanErrors._
 
-object System {
+class SystemService[F[_]: Concurrent] private (base: Uri, client: Client[F]) {
 
   implicit val f = new io.circe.jawn.CirceSupportParser(None, false).facade
 
-  def info[F[_]: Concurrent](base: Uri, client: Client[F]): F[Either[PodmanError, Json]] =
+  def info(): F[Either[PodmanError, Json]] =
     client.get(infoUri(base)) { response =>
       response.status match {
         case status @ Status.Ok =>
@@ -40,7 +33,7 @@ object System {
       }
     }
 
-  def ping[F[_]: Concurrent](base: Uri, client: Client[F]): F[Either[PodmanError, Boolean]] =
+  def ping(): F[Either[PodmanError, Boolean]] =
     client.get(pingUri(base)) { response =>
       response.status match {
         case status @ Status.Ok => true.asRight.pure[F]
@@ -48,7 +41,7 @@ object System {
       }
     }
 
-  def df[F[_]: Concurrent](base: Uri, client: Client[F]): F[Either[PodmanError, Json]] =
+  def df(): F[Either[PodmanError, Json]] =
     client.get(dfUri(base)) { response =>
       response.status match {
         case status @ Status.Ok =>
@@ -59,7 +52,7 @@ object System {
       }
     }
 
-  def events[F[_]: Concurrent](base: Uri, client: Client[F]): F[Either[PodmanError, List[Json]]] = {
+  def events(): F[Either[PodmanError, List[Json]]] = {
     val stream = client
       .stream(Request[F](Method.GET, eventsUri(base).withQueryParam("stream", false)))
 
@@ -70,8 +63,14 @@ object System {
       .map(_.asRight)
   }
 
-  def eventsStream[F[_]: Concurrent](base: Uri, client: Client[F]): Stream[F, Json] = client
+  def eventsStream(): Stream[F, Json] = client
     .stream(Request[F](Method.GET, eventsUri(base).withQueryParam("stream", true)))
     .flatMap(_.body.chunks.parseJsonStream)
+
+}
+
+object SystemService {
+
+  def apply[F[_]: Concurrent](base: Uri, client: Client[F]) = new SystemService(base, client)
 
 }
