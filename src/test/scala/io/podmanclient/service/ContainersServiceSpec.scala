@@ -1,4 +1,4 @@
-package io.podmanclient.api
+package io.podmanclient.service
 
 import cats._
 import cats.effect.IO

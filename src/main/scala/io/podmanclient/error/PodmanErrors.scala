@@ -18,6 +18,14 @@ object PodmanErrors {
 
   }
 
+  final case class NoSuchImage(name: String) extends PodmanError {
+
+    def msg = s"Error: no image with name '$name' found"
+
+    override def toString(): String = msg
+
+  }
+
   final case class PodmanException(status: Int, response: String) extends PodmanError {
 
     def msg = s"Podman client error: status = $status, response = $response"

@@ -1,4 +1,4 @@
-package io.podmanclient.api
+package io.podmanclient.service
 
 import cats.effect._
 import cats.effect.syntax.all._
@@ -30,12 +30,13 @@ trait PodmanClientTest extends AsyncFlatSpec with AsyncIOSpec with Matchers {
 
   val mockServer =
     System.endpoints(baseUri) <+>
-      Containers.endpoints(baseUri)
+      Containers.endpoints(baseUri) <+> Images.endpoints(baseUri)
 
   val client = Logger(logHeaders = true, logBody = false)(Client.fromHttpApp(mockServer.orNotFound))
 
   val systemService     = SystemService(clientPrefix, client)
   val containersService = ContainersService(clientPrefix, client)
+  val imagesService     = ImagesService(clientPrefix, client)
 
   def assert[A](
     request: => IO[Either[PodmanError, A]],

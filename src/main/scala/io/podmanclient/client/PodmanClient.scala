@@ -2,17 +2,11 @@ package io.podmanclient.client
 
 import cats.effect._
 import cats.effect.implicits._
-import cats.effect.kernel.Resource
 import cats.implicits._
 import fs2.io.net.unixsocket.UnixSocketAddress
 import io.circe.Json
-import io.podmanclient.api.response._
-import io.podmanclient.config.PodmanConfig
-import io.podmanclient.config.TcpPodmanUri
-import io.podmanclient.config.UnixSocketPodmanUri
-import org.http4s.Response
-import org.http4s.Status
-import org.http4s.Uri
+import io.podmanclient.config._
+import org.http4s._
 import org.http4s.circe._
 import org.http4s.client.Client
 import org.http4s.client.middleware.UnixSocket
