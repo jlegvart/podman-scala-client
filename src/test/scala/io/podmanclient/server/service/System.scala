@@ -57,9 +57,33 @@ object System {
 
 object SystemServiceResponse {
 
-  def infoResponseSuccess: IO[Json] = loadResponse("info.json").flatMap(asJsonUnsafe)
+  def infoResponseSuccess: IO[Json] = Json
+    .obj(
+      "version" -> Json.obj(
+        "APIVersion" -> "3.4.4".asJson,
+        "Version"    -> "3.4.4".asJson,
+        "OsArch"     -> "linux/amd64".asJson,
+      )
+    )
+    .pure[IO]
 
-  def dfResponseSuccess: IO[Json] = loadResponse("df.json").flatMap(asJsonUnsafe)
+  def dfResponseSuccess: IO[Json] = Json
+    .obj(
+      "Images" -> List(
+        Map(
+          "Repository" -> "docker.io/library/postgres",
+          "Tag"        -> "latest",
+          "ImageID"    -> "07e2ee723e2d9c8c141137",
+        )
+      ).asJson,
+      "Containers" -> List(
+        Map(
+          "ContainerID" -> "35f7fc91ec45c4451fbd9e656e55e26ab63bde83ed68657732ef04bd1977a532",
+          "Image"       -> "07e2ee723e2d9c8c141137",
+        )
+      ).asJson,
+    )
+    .pure[IO]
 
   def eventsResponseSuccess: IO[String] = loadResponse("events.json")
 
