@@ -103,7 +103,7 @@ class ContainersService[F[_]: Concurrent] private (
   }
 
   def inspect(name: String): F[Either[PodmanError, Json]] = {
-    val request: Request[F] = Request[F](Method.POST, inspectContainerUri(base, name))
+    val request: Request[F] = Request[F](Method.GET, inspectContainerUri(base, name))
     client.run(request).use { response =>
       response.status match {
         case status @ Status.Ok       => response.as[Json].map(_.asRight)

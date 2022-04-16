@@ -82,7 +82,7 @@ class Containers(prefix: Uri.Path) {
     }
   }
 
-  val inspect = HttpRoutes.of[IO] { case req @ POST -> prefix / "containers" / name / "json" =>
+  val inspect = HttpRoutes.of[IO] { case req @ GET -> prefix / "containers" / name / "json" =>
     log(req.toString()) >> {
       name match {
         case "postgres" => inspectedContainer.flatMap(resp => Ok(resp))
